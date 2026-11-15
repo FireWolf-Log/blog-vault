@@ -83,7 +83,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "0521fa99145af20f",
@@ -185,11 +186,14 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "obsidian-git:Open Git source control": false,
+      "janitor:Janitor: scan vault": false
     }
   },
   "active": "44285e9c5f4e216e",
   "lastOpenFiles": [
+    "Untitled 1.md",
     "Untitled.md"
   ]
 }

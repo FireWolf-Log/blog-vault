@@ -8,90 +8,45 @@
 - **Provisional**：暫定，仍需驗證
 - **Pending**：尚未決定
 
-## **1. Content & Repository**
+- 文章、網站、程式碼及測試分離。
+- Markdown 不必放在 Astro 預設資料夾。
+- 方便未來更換網站框架。
 
-### **1.1 Version Control**
+Tools:
+Contents: markdown
+Metadata: yaml in front of each `.md` post
+Editing tool: obsidian
 
-- **Requirements**
-	- 保存文章、程式碼及修改歷史。
-	- 支援版本回復。
-	- 免費且方便自動化。
-- **Verdict:** Git + GitHub
-- **Alternative:** GitLab
-- **Status:** Selected
 
-### **1.2 Content Format**
+## **2. SNS **
 
-- **Requirements**
-	- 純文字、跨平台、人類可讀。
-	- 可在 Obsidian 編輯及預覽。
-	- 不依賴特定網站框架。
-	- 方便程式與 AI 自動處理。
-- **Verdict:** Markdown (`.md`)
-- **Alternative:** AsciiDoc
-- **Status:** Selected
-
-### **1.3 Post Metadata**
+| 平台／帳號類型                      | 讀取自己的貼文 | 發布貼文  | 免費使用評估          |
+| ---------------------------- | ------- | ----- | --------------- |
+| Facebook 個人檔案                | 受限      | x     | 不適合官方 API 全自動化  |
+| Facebook 粉絲專頁                | o       | o     | 可免費使用，需權限       |
+| Instagram 一般個人帳號             | x       | x     | 不支援目前的正式 API    |
+| Instagram Creator / Business | o       | o     | 可免費使用，需權限       |
+| Threads                      | o       | o     | 有免費官方 API，具配額限制 |
+| Bluesky                      | o       | o     | 免費且限制相對寬鬆       |
+| Mastodon                     | o       | o     | 免費，依伺服器限制       |
+| X / Twitter                  | 依付費額度   | 依付費額度 | 不宜假設能完全免費       |
 
 - **Requirements**
-	- 保存原始 SNS 平台、Post ID、URL。
-	- 保存原始發文時間及最後更新時間。
-	- 支援公開／私人狀態。
-	- 保存媒體及跨平台貼文對應資訊。
-- **Verdict:** YAML Frontmatter
-- **Alternative:** JSON Sidecar
-- **Status:** Provisional
+    - 優先支援手機發文。
+    - 能透過 API 讀取自己的貼文。
+    - 免費 API 優先。
+    - 盡可能支援圖片、影片、Reels。
+- Verdict: 藉由meta帳號連動 FB, IG, Threads 都能同步貼文
+	- 以 FB, IG 發文為主，因為能同步格式較多
+	- 以IG為主要貼文資訊截取方式 （除免費外，因其允許多帳號，可能較不容易被ban)
 
-### **1.4 Local Editor**
-
-- **Requirements**
-	- 本機 Markdown 編輯。
-	- 支援即時預覽圖片，包括遠端圖片。
-	- 與 Git 工作流程相容。
-- **Verdict:** Obsidian
-- **Alternative:** VS Code
-- **Status:** Selected
-
-### **1.5 Repository Structure**
-
-- **Requirements**
-	- 文章、網站、程式碼及測試分離。
-	- Markdown 不必放在 Astro 預設資料夾。
-	- 方便未來更換網站框架。
-- **Verdict:** Monorepo + Independent `content/`
-- **Alternative:** Multiple Repositories
-- **Status:** Selected
-
-## **2. SNS Data Ingestion**
-
-### **2.1 Primary SNS Source**
-
-- **Requirements**
-	- 優先支援手機發文。
-	- 能透過 API 讀取自己的貼文。
-	- 免費 API 優先。
-	- 盡可能支援圖片、影片、Reels。
-- **Verdict:** Instagram Professional
-- **Alternative:** Facebook Page
-- **Status:** Provisional
-
-### **2.2 SNS Data Access**
-
-- **Requirements**
-	- 自動取得公開貼文內容。
-	- 取得文字、時間、來源 ID、媒體資訊。
-	- 優先使用官方 API。
-	- 需確認各平台 API 權限與免費額度。
-- **Verdict:** Official SNS APIs
-- **Alternative:** Official Data Export
-- **Status:** Provisional
 
 ### **2.3 Scheduled Fetch**
 
 - **Requirements**
 	- 定期檢查 SNS 是否有新貼文。
 	- 不需個人電腦持續運作。
-	- 可手動觸發。
+	- 自動/手動觸發。
 - **Verdict:** GitHub Actions Schedule
 - **Alternative:** Self-hosted Runner
 - **Status:** Selected
@@ -102,9 +57,7 @@
 	- 只將允許公開的貼文發布到網站。
 	- 私人貼文不得意外公開。
 	- 支援手動排除特定文章。
-- **Verdict:** Explicit Visibility Filter
-- **Alternative:** Manual Approval
-- **Status:** Provisional
+
 
 ### **2.5 Change Detection & Deduplication**
 

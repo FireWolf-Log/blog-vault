@@ -1,16 +1,62 @@
-# **UGC Backup & Blog System — Requirements & Technology Decisions**
+## Purpose
 
-以下全部改為條列式，統一使用 **Requirements / Verdict / Alternative / Status** 格式。
+  
 
-狀態定義：
+This repository aims to provide an automated, platform-independent system for **backing up public social media posts to a personal blog**.
 
-- **Selected**：已選定
-- **Provisional**：暫定，仍需驗證
-- **Pending**：尚未決定
+  
 
-- 文章、網站、程式碼及測試分離。
-- Markdown 不必放在 Astro 預設資料夾。
-- 方便未來更換網站框架。
+The system periodically retrieves public posts from social networking services (SNS), converts their text and metadata into Markdown, and backs up associated media files (such as images and videos) to external storage. Public media URLs are then embedded into the Markdown files, which are version-controlled and used to generate a static blog website.
+
+  
+
+The goal is to **preserve ownership and accessibility of personal content**, reducing dependence on individual social media platforms and the risk of content loss due to account suspension, deletion, or service shutdown.
+
+  
+
+The system is designed to be **modular and tool-agnostic**, allowing social media platforms, storage providers, and website-building tools to be replaced independently.
+
+  
+
+```mermaid
+
+flowchart TB
+
+fetch["Fetch SNS Posts"] --> pub{"Public?"}
+
+pub -- No --> END
+
+pub -- Yes --> chk{"New / Updated?"}
+
+chk -- No --> END
+
+chk -- Yes --> ext["Extract Content"]
+
+ext -- Text / Meta --> md["Convert to MD"]
+
+ext -- Binary --> dl["Download Media"]
+
+dl --> up["Upload Media"]
+
+up --> url["Get Public URLs"]
+
+url --> embed["Embed Media Links"]
+
+md --> embed
+
+embed --> git["Commit MD to Git"]
+
+git --> publish["Build &amp; Publish"]
+
+publish --> END
+
+  
+
+END@{ shape: stop}
+
+```
+
+
 
 Tools:
 Contents: markdown
@@ -126,8 +172,7 @@ Portability & Maintainability
 	- 不需個人電腦持續運作。
 	- 自動/手動觸發。
 - **Verdict:** GitHub Actions Schedule
-- **Alternative:** Self-hosted Runner
-- **Status:** Selected
+
 
 ### **2.4 Public Content Filtering**
 
@@ -139,36 +184,47 @@ Portability & Maintainability
 
 
 
-### **2.5 Change Detection & Deduplication**
+### 2.5 Change Detection & Deduplication
 
 - **Requirements**
-	- 辨識新增與修改過的貼文。
-	- 避免重複建立 Markdown。
-	- 支援安全重試。
-	- 同一內容在不同 SNS 發布時可保留來源對應。
-- **Verdict:** Source Post ID + Content Hash
-- **Alternative:** Timestamp Comparison
-- **Status:** Provisional
+  - 使用文字內容 SHA-256 偵測新增或修改的內容。
+  - 相同文字內容不重複建立 Markdown。
+  - 文字修改後視為新版本，採 Append-only Backup。
+  - **假設文字修改不影響原貼文的 Binary Files。**
+  - 同一來源貼文的文字更新時，直接重用既有媒體 URL，不重新下載或上傳。
+  - 保留 SNS Platform、Post ID 與媒體 URL 的對應關係。
+  - 暫不偵測媒體新增、刪除或修改。
+  - 未來可擴充 Binary SHA-256 與 pHash 去重機制。
+
+```mermaid
+flowchart TD
+    A["Fetch SNS Post"] --> B["Compute Text Hash"]
+    B --> C{"Text Exists?"}
+    C -- Yes --> D["Skip"]
+    C -- No --> E{"Source Post Known?"}
+    E -- Yes --> F["Reuse Media URLs"]
+    E -- No --> G["Download & Upload Media"]
+    F --> H["Create Markdown Version"]
+    G --> H
+    H --> I["Commit to Git"]
+```
 
 ### **2.6 Content Conversion**
 
 - **Requirements**
 	- 將 SNS 貼文轉換為 Markdown。
 	- 保存原始發文時間。
-	- 保留文字、連結及媒體順序。
+	- 保留文字、連結及媒體順序、metadata。
 	- 支援不同 SNS 的格式差異。
 - **Verdict:** Python + Platform-specific Adapters
-- **Alternative:** TypeScript
-- **Status:** Selected
+
 
 ### **2.7 Deleted Posts**
 
 - **Requirements**
 	- SNS 原文刪除時，不應直接失去備份。
 	- 能記錄來源貼文已刪除或無法存取。
-- **Verdict:** Retain Backup + Mark Source Status
-- **Alternative:** Mirror Source Deletion
-- **Status:** Provisional
+
 
 ## **3. Media Storage & Hosting**
 
@@ -180,8 +236,7 @@ Portability & Maintainability
 	- 支援選擇性公開。
 	- 偏好一次性 Lifetime 付費。
 - **Verdict:** pCloud
-- **Alternative:** Backblaze B2
-- **Status:** Provisional
+
 
 ### **3.2 Public Media Hosting**
 
@@ -191,8 +246,7 @@ Portability & Maintainability
 	- 影片可透過 HTML 嵌入。
 	- 公開連結盡可能穩定。
 - **Verdict:** pCloud Public Links / Public Folder
-- **Alternative:** Cloudflare R2
-- **Status:** Provisional
+
 
 ### **3.3 Automated Media Upload**
 
@@ -200,21 +254,18 @@ Portability & Maintainability
 	- 自動下載 SNS 媒體原檔。
 	- 上傳到指定雲端資料夾。
 	- 取得公開 URL 並回填 Markdown。
-	- 支援上傳失敗重試。
+	- 支援上傳失敗重試。(可設定重試次數，失敗需詳細記錄在 log)
 - **Verdict:** pCloud API
-- **Alternative:** rclone
-- **Status:** Provisional
+
 
 ### **3.4 Media URL Management**
 
 - **Requirements**
 	- Markdown 可直接顯示圖片。
 	- Obsidian 本機預覽不需特殊外掛。
-	- 更換儲存服務時能批次修改 URL。
+	- 更換儲存服務時能批次修改 URL。（未來可透過script手動執行以修改、管理）
 	- 儘量降低架構複雜度。
 - **Verdict:** Direct URLs in Markdown + Migration Script
-- **Alternative:** Centralized Asset Manifest
-- **Status:** Selected
 
 ### **3.5 Media Integrity**
 

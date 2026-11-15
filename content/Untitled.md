@@ -17,7 +17,85 @@ Contents: markdown
 Metadata: yaml in front of each `.md` post
 Editing tool: obsidian
 
+Requirements
 
+採用 Two-Repo Architecture，將內容資料與系統程式碼分離。
+
+Content Repo (blog-content)
+
+保存 Markdown 文章、YAML Frontmatter、SNS Metadata 與同步狀態。
+
+可獨立作為 Obsidian Vault 使用。
+
+不依賴 Astro 或其他 Static Site Generator。
+
+保留文章與 Metadata 的 Git 修改歷史。
+
+預設為 Private Repository，避免原始備份資料意外公開。
+
+System Repo (blog-system)
+
+保存 Astro 網站、SNS API Adapters、Automation Scripts、Tests 與 GitHub Actions Workflows。
+
+負責 SNS 擷取、Change Detection、Deduplication、Markdown Conversion 與 Media Processing。
+
+負責 Static Site Build、Validation 與 Deployment。
+
+可設為 Public Repository，但不得包含 Credentials 或私人內容。
+
+Cross-Repository Integration
+
+GitHub Actions 可讀取及寫入 Private Content Repo。
+
+使用最小權限的 Fine-grained PAT 或 GitHub App 進行跨 Repo 存取。
+
+不要求 Content Repo 更新後立即觸發網站建置。
+
+System Repo 至少支援定期自動建置與部署（Scheduled Build / Deployment），並可手動觸發。
+
+每次建置時讀取 Content Repo 的最新可用內容。
+
+Astro 可直接讀取外部 Markdown，不要求內容位於 Astro 預設目錄。
+
+建置時固定 Content Commit SHA，確保結果可重現。
+
+Automation & Reliability
+
+將 SNS Backup 與 Website Deployment 分為獨立 Pipelines。
+
+Backup Pipeline 將結果 Commit & Push 至 Content Repo。
+
+Deployment Pipeline 僅讀取 Content Repo，不修改原始文章。
+
+支援 Scheduled 與 Manual Triggers，不強制使用跨 Repo 即時觸發。
+
+支援 Idempotent Execution、Retry、Concurrency Control 與 Git Conflict Handling。
+
+同步失敗不得造成已有備份資料遺失。
+
+網站建置失敗時不得影響既有備份資料或已成功部署的網站版本。
+
+Privacy & Security
+
+僅允許 visibility: public 的文章進入公開網站。
+
+私人文章、附件與 Metadata 不得出現在 HTML、Search Index、RSS、Sitemap 或 Build Artifacts。
+
+未明確標示公開的內容預設不發布。
+
+API Tokens 使用 GitHub Actions Secrets 管理。
+
+不允許不受信任的 Workflow 存取私人內容或 Secrets。
+
+Portability & Maintainability
+
+可獨立更新內容或系統程式碼。
+
+可更換 Astro、Hosting Provider 或 SNS Adapter，而不需要遷移 Markdown。
+
+支援未來多個網站共用同一 Content Repo。
+
+優先使用 GitHub 與 Astro 官方支援的整合機制，避免不必要的客製化工具。
 ## **2. SNS **
 
 | 平台／帳號類型                      | 讀取自己的貼文 | 發布貼文  | 免費使用評估          |
@@ -57,6 +135,8 @@ Editing tool: obsidian
 	- 只將允許公開的貼文發布到網站。
 	- 私人貼文不得意外公開。
 	- 支援手動排除特定文章。
+
+
 
 
 ### **2.5 Change Detection & Deduplication**
